@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>非公式！ポケGO検索ワード生成ツール</title>
+<meta name="description" content="Pokémon GOのボックス検索ワードを、条件を選ぶだけで簡単に組み立てられる非公式ツール">
+<meta name="theme-color" content="#f2f5fa">
+<meta name="color-scheme" content="light">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="検索ワード生成">
+<style>
+:root{ color-scheme:light;
+  --bg:#f2f5fa; --card:#ffffff; --ink:#18243a; --sub:#586780;
+  --brand:#2a75d3; --brand-deep:#1d5cb0; --accent:#f59e0b;
+  --line:#dce3ed; --track:#eaf0f7; --chip:#eaf0f7; --danger:#c43e4b; --ok:#0c8663; --title:#2a75d3;
+  --out-bg:#e3eefc; --out-line:#b9d2f2;
+  --shadow:0 2px 10px rgba(24,36,58,.07);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent}
+.wrap{max-width:620px;margin:0 auto;padding:14px 14px 190px}
+.series-header{text-align:center;margin:0 0 12px}
+.series-name{font-size:0.95rem;color:var(--sub);margin-bottom:8px}
+h1{font-size:22px;margin:0 0 5px;line-height:1.35;color:var(--title);text-align:center}
+.catch{display:flex;justify-content:center;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:0.95rem}
+.catch .ver{font-size:0.78rem;color:var(--sub)}
+.lang-row{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:10px}
+.lang-label{font-size:13px;color:var(--sub)}
+.seg{display:inline-flex;background:var(--track);border:1px solid var(--line);border-radius:999px;padding:3px;gap:3px}
+.seg button{background:transparent;border-radius:999px;padding:7px 18px;font-size:14px;color:var(--sub);font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--brand);color:#fff}
+.out-left{display:flex;align-items:center;gap:10px}
+.reset-btn{padding:9px 13px;font-size:14px;font-weight:700;background:#fdecec;border:1px solid #e58a93;color:#c43e4b;border-radius:11px}
+.reset-btn:active{transform:scale(.97)}
+.controls{display:flex;gap:6px;flex-shrink:0}
+button{font:inherit;cursor:pointer;border:0}
+.pill-btn{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 11px;color:var(--ink);font-size:13px}
+.pill-btn[aria-pressed="true"]{background:var(--brand);color:#fff;border-color:var(--brand)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
+.card h2{font-size:15px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+.card h2::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--brand);flex-shrink:0}
+.card .hint{font-size:12px;color:var(--sub);margin:0 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip span{display:inline-block;padding:8px 13px;border-radius:999px;background:var(--chip);border:1px solid var(--line);font-size:14px;cursor:pointer}
+.chip input:checked + span{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.chip input:focus-visible + span{outline:2px solid var(--brand);outline-offset:2px}
+.chip .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--tc);margin-right:6px;vertical-align:1px}
+.chip.type-chip input:checked + span{background:var(--tc);border-color:var(--tc);color:var(--tct)}
+.chip.type-chip input:checked + span .dot{background:var(--tct)}
+label.f{display:block;font-size:13px;color:var(--sub);margin:10px 0 5px}
+input[type="text"],input[type="number"],select,textarea{
+  font:inherit;padding:11px;border:1px solid var(--line);border-radius:11px;background:var(--card);color:var(--ink);width:100%;min-width:0}
+input[type="text"]:focus,input[type="number"]:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(42,117,211,.18)}
+.range{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.range .tilde{color:var(--sub)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;padding:6px 0}
+.check input{width:19px;height:19px;accent-color:var(--brand)}
+.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.preset{background:var(--track);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:left;font-size:13px;color:var(--ink)}
+.preset b{display:block;font-size:14px;margin-bottom:2px}
+.preset:active{transform:scale(.98)}
+.primary{background:var(--brand);color:#fff;border-radius:12px;padding:13px 18px;font-weight:700}
+.ghost{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:11px;padding:10px 14px;font-size:14px}
+.small{font-size:12px;color:var(--sub)}
+.warn{background:#fef3c7;color:#92400e;border-radius:11px;padding:9px 12px;font-size:13px;margin-top:8px;display:none}
+.warn.show{display:block}
+.output{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);box-shadow:0 -4px 18px rgba(24,36,58,.10);padding:10px 14px calc(10px + env(safe-area-inset-bottom));z-index:10}
+.output-in{max-width:620px;margin:0 auto}
+.out-str{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:17px;font-weight:700;word-break:break-all;background:var(--out-bg);border:1px solid var(--out-line);border-radius:11px;padding:10px 12px;min-height:44px}
+.out-str.empty{color:var(--sub);font-family:inherit;font-weight:500;font-size:14px}
+.out-meta{display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px}
+.out-summary{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.5}
+.copy-btn{background:var(--brand);color:#fff;border-radius:11px;padding:11px 22px;font-weight:700;font-size:15px;flex-shrink:0}
+.copy-btn:active{transform:scale(.97)}
+.group-card{border:1px solid var(--line);border-radius:13px;padding:10px;margin-bottom:9px;background:var(--bg)}
+.group-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--sub);margin-bottom:7px}
+.term-chips{display:flex;flex-wrap:wrap;gap:6px}
+.tchip{display:inline-flex;align-items:center;gap:5px;background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:5px 6px 5px 11px;font-size:13px}
+.tchip .not{font-weight:800;color:var(--danger)}
+.tchip button{background:none;color:var(--sub);font-size:14px;padding:2px 5px;border-radius:999px}
+.tchip button.on{color:#fff;background:var(--danger)}
+.and-sep{text-align:center;color:var(--sub);font-size:12px;font-weight:700;margin:2px 0 9px}
+details.card summary{cursor:pointer;font-weight:700;font-size:15px}
+details.card p,details.card li{font-size:13px;line-height:1.65;color:var(--ink)}
+details.card ul{padding-left:18px;margin:6px 0}
+code{background:var(--track);border-radius:6px;padding:1px 6px;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.copy-btn,.seg button[aria-pressed="true"]{background:var(--brand)}
+footer{text-align:center;color:var(--sub);font-size:12px;line-height:1.7;padding:8px 0}
+.toast{position:fixed;left:50%;bottom:190px;transform:translateX(-50%) translateY(60px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:.3s;pointer-events:none;z-index:20;max-width:92vw;text-align:center}
+.toast.show{transform:translateX(-50%);opacity:1}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="series-header">
+    <div class="series-name">非公式！ポケモンツールシリーズ</div>
+    <h1>非公式！ポケGO検索ワード生成</h1>
+    <div class="catch"><strong>条件を選ぶだけで検索ワードを自動生成</strong><span class="ver">Ver.1.2.1</span></div>
+    <div class="lang-row">
+      <span class="lang-label">出力:</span>
+      <span class="seg" role="group" aria-label="出力ワードの言語">
+        <button type="button" id="langJa" aria-pressed="true">日本語</button>
+        <button type="button" id="langEn" aria-pressed="false">英語</button>
+      </span>
+    </div>
+  </header>
+
+  <!-- ============ SIMPLE MODE ============ -->
+  <main id="simpleMode">
+    <section class="card">
+      <h2>⭐ よく使うプリセット</h2>
+      <p class="hint">タップすると条件がセットされます（今の条件は置き換わります）。</p>
+      <div class="preset-grid">
+        <button class="preset" data-preset="hundo"><b>個体値100%</b>4* のポケモン</button>
+        <button class="preset" data-preset="zero"><b>個体値0%</b>0/0/0 のポケモン</button>
+        <button class="preset" data-preset="today"><b>今日ゲット</b>過去24時間以内</button>
+        <button class="preset" data-preset="shinyLegend"><b>色違い×伝説</b>両方に当てはまる</button>
+        <button class="preset" data-preset="canEvolve"><b>進化できる</b>今すぐ進化可能</button>
+        <button class="preset" data-preset="cleanup"><b>整理候補</b>色違い・伝説・100%・お気に入りを除外</button>
+      </div>
+      <p class="small" style="margin:8px 0 0">※「整理候補」は博士送りの判断材料の表示だけです。送る前に必ずゲーム内で1匹ずつ目視確認してください。</p>
+    </section>
+
+    <section class="card">
+      <h2>名前・図鑑番号</h2>
+      <label class="f" for="sName">ポケモン名 / ニックネーム</label>
+      <input type="text" id="sName" placeholder="例：ピカチュウ" maxlength="30" autocomplete="off">
+      <label class="check"><input type="checkbox" id="sFamily"> 進化ファミリー全体（+を付ける）</label>
+      <label class="f">図鑑番号の範囲</label>
+      <div class="range"><input type="number" id="r_dex_min" min="1" max="1025" placeholder="最小"><span class="tilde">〜</span><input type="number" id="r_dex_max" min="1" max="1025" placeholder="最大"></div>
+    </section>
+
+    <section class="card">
+      <h2>タイプ・地方・性別・サイズ</h2>
+      <p class="hint">同じカテゴリで複数を選ぶと「どれか（OR）」になります。</p>
+      <label class="f">タイプ</label><div class="chips" id="typeChips"></div>
+      <label class="f">地方</label><div class="chips" id="regionChips"></div>
+      <label class="f">性別</label><div class="chips" id="genderChips"></div>
+      <label class="f">サイズ</label><div class="chips" id="sizeChips"></div>
+    </section>
+
+    <section class="card">
+      <h2>評価・個体値</h2>
+      <label class="f">リーダー評価（複数選択はOR）</label><div class="chips" id="starChips"></div>
+      <div class="grid2">
+        <div><label class="f" for="ivAtk">こうげき</label><select id="ivAtk"></select></div>
+        <div><label class="f" for="ivDef">ぼうぎょ</label><select id="ivDef"></select></div>
+        <div><label class="f" for="ivHp">HP</label><select id="ivHp"></select></div>
+      </div>
+      <p class="small">評価の数字は 0=個体値0、1=1〜5、2=6〜10、3=11〜14、4=15 に対応します。</p>
+    </section>
+
+    <section class="card">
+      <h2>数値の範囲</h2>
+      <p class="hint">片方だけ入れると「以上」または「以下」になります。</p>
+      <label class="f">CP</label><div class="range"><input type="number" id="r_cp_min" min="0" placeholder="最小"><span class="tilde">〜</span><input type="number" id="r_cp_max" min="0" placeholder="最大"></div>
+      <label class="f">HP</label><div class="range"><input type="number" id="r_hp_min" min="0" placeholder="最小"><span class="tilde">〜</span><input type="number" id="r_hp_max" min="0" placeholder="最大"></div>
+      <label class="f">ゲット場所までの距離（km）</label><div class="range"><input type="number" id="r_distance_min" min="0" placeholder="最小"><span class="tilde">〜</span><input type="number" id="r_distance_max" min="0" placeholder="最大"></div>
+      <label class="f">ゲットしてからの日数</label><div class="range"><input type="number" id="r_age_min" min="0" placeholder="最小"><span class="tilde">〜</span><input type="number" id="r_age_max" min="0" placeholder="最大"></div>
+      <label class="f">ゲットした年</label><div class="range"><input type="number" id="r_year_min" min="2016" max="2100" placeholder="例 2016"><span class="tilde">〜</span><input type="number" id="r_year_max" min="2016" max="2100" placeholder="最大"></div>
+      <label class="f">相棒レベル（0〜5）</label><div class="range"><input type="number" id="r_buddy_min" min="0" max="5" placeholder="最小"><span class="tilde">〜</span><input type="number" id="r_buddy_max" min="0" max="5" placeholder="最大"></div>
+      <p class="small">※相棒の日本語ワードは情報源で表記が揺れており、本ツールは実機系の「相棒を選ぶ」を使います（公式表記は「相棒」）。</p>
+      <label class="f">メガレベル（0〜3）</label><div class="range"><input type="number" id="r_mega_min" min="0" max="3" placeholder="最小"><span class="tilde">〜</span><input type="number" id="r_mega_max" min="0" max="3" placeholder="最大"></div>
+    </section>
+
+    <section class="card">
+      <h2>特別な条件</h2>
+      <p class="hint">選んだ条件はすべて「かつ（AND）」で結ばれます。</p>
+      <label class="f">状態・種類</label><div class="chips" id="specialChips"></div>
+      <label class="f">進化</label><div class="chips" id="evolveChips"></div>
+      <label class="f">入手方法（複数選択はOR）</label><div class="chips" id="encounterChips"></div>
+    </section>
+
+    <section class="card">
+      <h2>わざ</h2>
+      <label class="f" for="sMoveName">技名で探す</label>
+      <div class="grid2">
+        <input type="text" id="sMoveName" placeholder="例：ハイドロポンプ" maxlength="30" autocomplete="off">
+        <select id="sMoveSlot"><option value="">すべての技</option><option value="1">通常技（@1）</option><option value="2">ゲージ技（@2）</option><option value="3">開放技（@3）</option></select>
+      </div>
+      <label class="f" for="sMoveType">技のタイプで探す</label>
+      <div class="grid2">
+        <select id="sMoveType"></select>
+        <select id="sMoveSlot2"><option value="">すべての技</option><option value="1">通常技（@1）</option><option value="2">ゲージ技（@2）</option><option value="3">開放技（@3）</option></select>
+      </div>
+      <label class="check"><input type="checkbox" id="sMoveSpecial"> 特別なわざ・レガシー技を持っている</label>
+      <label class="f" for="sWeatherSlot">天候ブースト中の技</label>
+      <select id="sWeatherSlot"><option value="off">指定しない</option><option value="">すべての技</option><option value="1">通常技（@1）</option><option value="2">ゲージ技（@2）</option><option value="3">開放技（@3）</option></select>
+      <label class="f">タイプ相性で探す</label>
+      <div class="grid2">
+        <div><label class="f" for="sWeak">このタイプが弱点</label><select id="sWeak"></select></div>
+        <div><label class="f" for="sStrong">このタイプに強い技を持つ</label><select id="sStrong"></select></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>タグ・除外</h2>
+      <label class="f" for="sTag">タグ名（付けたタグで探す）</label>
+      <input type="text" id="sTag" placeholder="例：バトル用" maxlength="30" autocomplete="off">
+      <label class="check"><input type="checkbox" id="sTagAll"> タグが付いているポケモンすべて（#）</label>
+      <label class="f" for="notSelect">除外したい条件（NOT）を追加</label>
+      <div style="display:flex;gap:8px"><select id="notSelect" style="flex:1"></select><button class="ghost" id="notAdd" type="button">追加</button></div>
+      <div class="term-chips" id="notList" style="margin-top:9px"></div>
+      <div style="margin-top:14px"><button class="ghost" id="clearSimple" type="button">条件をすべてクリア</button></div>
+    </section>
+  </main>
+
+  <details class="card">
+    <summary>使い方と構文ルール</summary>
+    <ul>
+      <li>生成された文字列をコピーして、Pokémon GOのポケモンボックス検索欄に貼り付けるだけです。</li>
+      <li><code>&</code> = AND（かつ）、<code>,</code> = OR（どれか）、<code>!</code> = NOT（〜でない）。ゲーム側では OR が AND より先に評価され、括弧は使えません。本ツールの組み立て方はこの仕様に合わせています。</li>
+      <li>出力言語はタイトル下のボタンで日本語/英語を切替できます。ゲームの言語設定に合わせて選んでください。日本語で確認できていないワード（ダイマックス等）は日本語モードでは生成しません。</li>
+      <li><code>+名前</code>（進化ファミリー）は文字列の先頭かカンマの直後でだけ有効とされるため、必要なら自動で先頭に並べ替えます。</li>
+    </ul>
+  </details>
+
+  <footer>
+    非公式！ポケGO検索ワード生成 v1.2.1<br>
+    本ツールは非公式のファンツールです。Pokémon GO / Niantic / 任天堂 / 株式会社ポケモンとは関係ありません。<br>
+    構文の根拠: Niantic公式ヘルプ、Pokémon GO Hub Database、ポケモンGO攻略図鑑、ポケモンWiki（2026-10-26調査）
+  </footer>
+</div>
+
+<!-- ============ OUTPUT ============ -->
+<div class="output">
+  <div class="output-in">
+    <div class="out-str empty" id="outStr">条件を選ぶと、ここに検索ワードが出ます</div>
+    <div class="warn" id="outWarn"></div>
+    <div class="out-summary" id="outSummary"></div>
+    <div class="out-meta">
+      <span class="out-left">
+        <span class="small" id="outCount">0 文字</span>
+        <button class="reset-btn" id="resetBtn" type="button">リセット</button>
+      </span>
+      <span style="display:flex;gap:8px">
+        <button class="ghost" id="shareBtn" type="button">共有</button>
+        <button class="copy-btn" id="copyBtn" type="button">📋 コピー</button>
+      </span>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+"use strict";
+const APP_VERSION = "1.2.1";
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
+/* ================= DATA DICTIONARY (verified 2026-10-26) =================
+   ja/en = the exact search word per game language. null = NOT verified for
+   that language -> never generated in that language (see research doc).   */
+const TYPES = [
+  ["ノーマル","normal"],["ほのお","fire"],["みず","water"],["でんき","electric"],
+  ["くさ","grass"],["こおり","ice"],["かくとう","fighting"],["どく","poison"],
+  ["じめん","ground"],["ひこう","flying"],["エスパー","psychic"],["むし","bug"],
+  ["いわ","rock"],["ゴースト","ghost"],["ドラゴン","dragon"],["あく","dark"],
+  ["はがね","steel"],["フェアリー","fairy"]
+];
+/* type colors: same table as 非公式！ポケモン相性マスター */
+const TYPE_COLORS = ["#9099A1","#F08030","#539DDF","#E3B326","#63A83D","#67BAC2","#B84B50","#9A58A1","#B89A54","#7C9ACA","#D86A91","#82A038","#AA9862","#75639B","#5B65C8","#66575A","#8997A5","#DA88B5"];
+function typeTextColor(hex) {
+  const n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return lum > 0.55 ? "#18243a" : "#ffffff";
+}
+const REGIONS = [
+  ["カントー","kanto"],["ジョウト","johto"],["ホウエン","hoenn"],["シンオウ","sinnoh"],
+  ["イッシュ","unova"],["カロス","kalos"],["アローラ","alola"],["ガラル","galar"],
+  ["ヒスイ","hisui"],["パルデア","paldea"]
+];
+const GENDERS = [["おす","male"],["めす","female"],["性別不明","genderunknown"]];
+const SIZES = [["XXS","xxs"],["XS","xs"],["XL","xl"],["XXL","xxl"]];
+const STARS = ["0*","1*","2*","3*","4*"];
+const KEYWORDS = [
+  // cat: special
+  {k:"shiny",cat:"special",label:"色違い",ja:"色違い",en:"shiny"},
+  {k:"lucky",cat:"special",label:"キラ",ja:"キラ",en:"lucky"},
+  {k:"legendary",cat:"special",label:"伝説のポケモン",ja:"伝説のポケモン",en:"legendary"},
+  {k:"mythical",cat:"special",label:"幻のポケモン",ja:"まぼろし",en:"mythical"},
+  {k:"shadow",cat:"special",label:"シャドウ",ja:"しゃどう",en:"shadow"},
+  {k:"purified",cat:"special",label:"ライト",ja:"らいと",en:"purified"},
+  {k:"ultrabeast",cat:"special",label:"ウルトラビースト",ja:"ウルトラビースト",en:"ultrabeast"},
+  {k:"costume",cat:"special",label:"コスチューム（特別）",ja:"とくべつ",en:"costume"},
+  {k:"hatched",cat:"special",label:"タマゴからふか",ja:"ふか",en:"hatched"},
+  {k:"traded",cat:"special",label:"交換で入手",ja:"こうかん",en:"traded"},
+  {k:"eggsonly",cat:"special",label:"ベイビィ（タマゴのみ）",ja:"たまごのみ",en:"eggsonly"},
+  {k:"favorite",cat:"special",label:"お気に入り",ja:"お気に入り",en:"favorite"},
+  {k:"defender",cat:"special",label:"ジム防衛中",ja:"ジムを守るポケモン",en:"defender"},
+  {k:"background",cat:"special",label:"背景あり",ja:"はいけい",en:"background"},
+  {k:"specialbackground",cat:"special",label:"スペシャル背景",ja:"すぺしゃるはいけい",en:"specialbackground"},
+  {k:"locationbackground",cat:"special",label:"ロケーション背景",ja:null,en:"locationbackground"},
+  {k:"candyxl",cat:"special",label:"アメXL強化済み",ja:"アメXL",en:"candyxl"},
+  {k:"dynamax",cat:"special",label:"ダイマックス",ja:null,en:"dynamax"},
+  {k:"gigantamax",cat:"special",label:"キョダイマックス",ja:null,en:"gigantamax"},
+  {k:"hypertraining",cat:"special",label:"ハイパートレーニング中",ja:null,en:"hypertraining"},
+  {k:"fusion",cat:"special",label:"合体できる/合体済み",ja:"がったい",en:"fusion"},
+  // cat: evolve
+  {k:"evolve",cat:"evolve",label:"今すぐ進化できる",ja:"進化",en:"evolve"},
+  {k:"evolvenew",cat:"evolve",label:"進化で未登録を埋められる",ja:"みとうろく",en:"evolvenew"},
+  {k:"item",cat:"evolve",label:"道具で進化できる",ja:"どうぐ",en:"item"},
+  {k:"tradeevolve",cat:"evolve",label:"交換進化の対象",ja:"こうかんしんか",en:"tradeevolve"},
+  {k:"evolvequest",cat:"evolve",label:"条件で進化（相棒タスク等）",ja:"じょうけんしんか",en:"evolvequest"},
+  {k:"megaevolve",cat:"evolve",label:"メガシンカできる",ja:"めがしんか",en:"megaevolve"},
+  // cat: encounter
+  {k:"raid",cat:"encounter",label:"レイド",ja:"レイド",en:"raid"},
+  {k:"megaraid",cat:"encounter",label:"メガレイド",ja:"メガレイド",en:"megaraid"},
+  {k:"remoteraid",cat:"encounter",label:"リモートレイド",ja:"リモートレイド",en:"remoteraid"},
+  {k:"exraid",cat:"encounter",label:"EXレイド",ja:null,en:"exraid"},
+  {k:"research",cat:"encounter",label:"リサーチ報酬",ja:"リサーチ",en:"research"},
+  {k:"gbl",cat:"encounter",label:"バトルリーグ報酬",ja:"バトルリーグ",en:"gbl"},
+  {k:"rocket",cat:"encounter",label:"ロケット団",ja:"ロケット",en:"rocket"},
+  {k:"snapshot",cat:"encounter",label:"スナップショット",ja:"スナップショット",en:"snapshot"},
+  {k:"party",cat:"encounter",label:"チームコラボ",ja:"チーム",en:"party"}
+];
+const RANGE_KEYS = [
+  {k:"dex",label:"図鑑番号",ja:"",en:""},
+  {k:"cp",label:"CP",ja:"cp",en:"cp"},
+  {k:"hp",label:"HP",ja:"hp",en:"hp"},
+  {k:"distance",label:"距離(km)",ja:"きょり",en:"distance"},
+  {k:"age",label:"日数",ja:"日数",en:"age"},
+  {k:"year",label:"年",ja:"年",en:"year"},
+  {k:"buddy",label:"相棒レベル",ja:"相棒を選ぶ",en:"buddy"},
+  {k:"mega",label:"メガレベル",ja:"メガ",en:"mega"}
+];
+const IV_STATS = [
+  {k:"atk",label:"こうげき",ja:"こうげき",en:"attack"},
+  {k:"def",label:"ぼうぎょ",ja:"ぼうぎょ",en:"defense"},
+  {k:"hp",label:"HP",ja:"HP",en:"hp"}
+];
+</script>
+<script>
+"use strict";
+/* ================= helpers ================= */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const T = (ja, en, label, not = false) => ({ ja, en, label, not: !!not });
+const kwTerm = (key, not = false) => { const d = KEYWORDS.find(x => x.k === key); return d ? T(d.ja, d.en, d.label, not) : null; };
+function sanitizeFree(s, extra = "") {
+  const bad = new RegExp("[&,:;!|\\n\\r" + extra + "]", "g");
+  const out = String(s || "").replace(bad, "").trim();
+  return { text: out, changed: out !== String(s || "").trim() };
+}
+function rangeExpr(minV, maxV) {
+  const hasMin = minV !== "" && minV != null && !isNaN(Number(minV));
+  const hasMax = maxV !== "" && maxV != null && !isNaN(Number(maxV));
+  if (!hasMin && !hasMax) return null;
+  const min = hasMin ? Number(minV) : null, max = hasMax ? Number(maxV) : null;
+  if (min != null && max != null) {
+    if (min > max) return { error: "範囲の最小が最大より大きい" };
+    return { expr: min === max ? String(min) : `${min}-${max}` };
+  }
+  return { expr: min != null ? `${min}-` : `-${max}` };
+}
+function rangeTerm(rk, minV, maxV) {
+  const r = rangeExpr(minV, maxV);
+  if (!r) return null;
+  if (r.error) return { error: `${rk.label}: ${r.error}` };
+  return T(rk.ja + r.expr, rk.en + r.expr, `${rk.label} ${r.expr}`);
+}
+function ivTerm(stat, expr, not = false) {
+  if (!expr) return null;
+  return T(expr + stat.ja, expr + stat.en, `${stat.label}評価 ${expr}`, not);
+}
+
+/* ================= core builder =================
+   groups = [[term, ...], ...] -> AND of OR-groups.
+   Game spec: ',' ';' ':' (OR) are evaluated BEFORE '&' (AND); no parentheses. */
+function buildOutput(groups, lang) {
+  const warnings = [];
+  let skipped = 0;
+  const used = [];
+  for (const g of groups) {
+    const terms = [];
+    for (const t of g) {
+      if (!t) continue;
+      if (t[lang] == null) { skipped++; continue; }
+      terms.push(t);
+    }
+    if (terms.length) used.push(terms);
+  }
+  if (skipped) warnings.push(`現在の出力言語では確認できていないワード ${skipped} 件を除外しました（推測で生成しないため）。`);
+  // '+' family terms are only valid at the start or right after a comma:
+  // move the first group containing one to the front (AND/OR are commutative, meaning is preserved).
+  const plusIdx = used.findIndex(g => g.some(t => String(t[lang]).replace(/^!/, "").startsWith("+")));
+  if (plusIdx > 0) { const [g] = used.splice(plusIdx, 1); used.unshift(g); warnings.push("進化ファミリー（+名前）は先頭でのみ有効なため、先頭に並べ替えました。"); }
+  const plusCount = used.flat().filter(t => String(t[lang]).replace(/^!/, "").startsWith("+")).length;
+  if (plusCount > 1) warnings.push("進化ファミリー（+名前）が複数あります。2件目以降は効かない可能性があるため、1件に絞ることをおすすめします。");
+  const str = used.map(g => g.map(t => (t.not ? "!" : "") + t[lang]).join(",")).join("&");
+  const summary = used.map(g => {
+    const parts = g.map(t => t.not ? `${t.label}ではない` : t.label);
+    return parts.length > 1 ? `（${parts.join(" または ")}）` : parts[0];
+  }).join(" かつ ");
+  return { str, summary, warnings, groups: used };
+}
+
+/* ================= language ================= */
+let lang = "ja";
+function setLang(next) {
+  if (lang === next) return;
+  lang = next;
+  $("langJa").setAttribute("aria-pressed", lang === "ja" ? "true" : "false");
+  $("langEn").setAttribute("aria-pressed", lang === "en" ? "true" : "false");
+  refreshLangAvailability(); render();
+}
+$("langJa").addEventListener("click", () => setLang("ja"));
+$("langEn").addEventListener("click", () => setLang("en"));
+
+/* ================= chip / select construction ================= */
+function chipHTML(name, value, label) {
+  return `<label class="chip"><input type="checkbox" name="${name}" value="${esc(value)}"><span>${esc(label)}</span></label>`;
+}
+$("typeChips").innerHTML = TYPES.map((t, i) => `<label class="chip type-chip"><input type="checkbox" name="type" value="${i}"><span style="--tc:${TYPE_COLORS[i]};--tct:${typeTextColor(TYPE_COLORS[i])}"><i class="dot"></i>${esc(t[0])}</span></label>`).join("");
+$("regionChips").innerHTML = REGIONS.map((t, i) => chipHTML("region", i, t[0])).join("");
+$("genderChips").innerHTML = GENDERS.map((t, i) => chipHTML("gender", i, t[0])).join("");
+$("sizeChips").innerHTML = SIZES.map((t, i) => chipHTML("size", i, t[0])).join("");
+$("starChips").innerHTML = STARS.map(s => chipHTML("star", s, s)).join("");
+for (const cat of ["special", "evolve", "encounter"]) {
+  $(cat + "Chips").innerHTML = KEYWORDS.filter(d => d.cat === cat)
+    .map(d => `<label class="chip" data-kwchip="${d.k}"><input type="checkbox" name="kw" value="${d.k}" id="kw_${d.k}"><span>${esc(d.label)}</span></label>`).join("");
+}
+const IV_OPTIONS = [["", "指定なし"], ["0", "0（個体値0）"], ["1", "1（1〜5）"], ["2", "2（6〜10）"], ["3", "3（11〜14）"], ["4", "4（15）"], ["0-1", "0〜1"], ["3-4", "3〜4"]];
+for (const id of ["ivAtk", "ivDef", "ivHp"]) $(id).innerHTML = IV_OPTIONS.map(o => `<option value="${o[0]}">${o[1]}</option>`).join("");
+const typeOptions = (placeholder) => `<option value="">${placeholder}</option>` + TYPES.map((t, i) => `<option value="${i}">${t[0]}</option>`).join("");
+$("sMoveType").innerHTML = typeOptions("指定しない");
+$("sWeak").innerHTML = typeOptions("指定しない");
+$("sStrong").innerHTML = typeOptions("指定しない");
+function buildNotSelect() {
+  const kw = KEYWORDS.map(d => `<option value="kw:${d.k}" ${d[lang] == null ? "disabled" : ""}>${esc(d.label)}</option>`).join("");
+  const stars = STARS.map(s => `<option value="star:${s}">評価 ${s}</option>`).join("");
+  $("notSelect").innerHTML = kw + stars;
+}
+buildNotSelect();
+function refreshLangAvailability() {
+  for (const d of KEYWORDS) {
+    const labelEl = document.querySelector(`[data-kwchip="${d.k}"]`);
+    const input = $("kw_" + d.k);
+    if (!labelEl || !input) continue;
+    const unavailable = d[lang] == null;
+    labelEl.classList.toggle("hidden", unavailable);
+    if (unavailable) input.checked = false;
+  }
+  buildNotSelect();
+}
+
+/* ================= simple mode ================= */
+let simpleNot = [];
+function checkedValues(name) { return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(i => i.value); }
+function pairTerms(name, pairs, labelFn) {
+  return checkedValues(name).map(v => { const p = pairs[Number(v)]; return T(p[0], p[1], labelFn(p)); });
+}
+function buildSimpleGroups() {
+  const groups = []; const warnings = [];
+  const nameS = sanitizeFree($("sName").value);
+  if (nameS.changed) warnings.push("名前に使えない記号（& , : ; ! |）を取り除きました。");
+  if (nameS.text) {
+    const fam = $("sFamily").checked;
+    groups.push([T((fam ? "+" : "") + nameS.text, (fam ? "+" : "") + nameS.text, fam ? `進化ファミリー（${nameS.text}）` : `名前「${nameS.text}」`)]);
+  }
+  const dexRk = RANGE_KEYS[0];
+  const dexT = rangeTerm(dexRk, $("r_dex_min").value, $("r_dex_max").value);
+  if (dexT && dexT.error) warnings.push(dexT.error); else if (dexT) groups.push([dexT]);
+  const typeG = pairTerms("type", TYPES, p => `タイプ:${p[0]}`); if (typeG.length) groups.push(typeG);
+  const regG = pairTerms("region", REGIONS, p => `地方:${p[0]}`); if (regG.length) groups.push(regG);
+  const genG = pairTerms("gender", GENDERS, p => `性別:${p[0]}`); if (genG.length) groups.push(genG);
+  const sizeG = pairTerms("size", SIZES, p => `サイズ:${p[0]}`); if (sizeG.length) groups.push(sizeG);
+  const starG = checkedValues("star").map(s => T(s, s, `評価 ${s}`)); if (starG.length) groups.push(starG);
+  [["ivAtk", IV_STATS[0]], ["ivDef", IV_STATS[1]], ["ivHp", IV_STATS[2]]].forEach(([id, stat]) => {
+    const t = ivTerm(stat, $(id).value); if (t) groups.push([t]);
+  });
+  for (const d of KEYWORDS.filter(x => x.cat === "special" || x.cat === "evolve")) {
+    const el = $("kw_" + d.k); if (el && el.checked) groups.push([kwTerm(d.k)]);
+  }
+  const encG = KEYWORDS.filter(x => x.cat === "encounter" && $("kw_" + x.k) && $("kw_" + x.k).checked).map(x => kwTerm(x.k));
+  if (encG.length) groups.push(encG);
+  for (const rk of RANGE_KEYS.slice(1)) {
+    const t = rangeTerm(rk, $("r_" + rk.k + "_min").value, $("r_" + rk.k + "_max").value);
+    if (t && t.error) warnings.push(t.error); else if (t) groups.push([t]);
+  }
+  const mvS = sanitizeFree($("sMoveName").value);
+  if (mvS.changed) warnings.push("技名に使えない記号を取り除きました。");
+  if (mvS.text) { const slot = $("sMoveSlot").value; groups.push([T("@" + slot + mvS.text, "@" + slot + mvS.text, `技「${mvS.text}」${slot ? `(${slot}番スロット)` : ""}`)]); }
+  if ($("sMoveType").value !== "") { const p = TYPES[Number($("sMoveType").value)]; const slot = $("sMoveSlot2").value; groups.push([T("@" + slot + p[0], "@" + slot + p[1], `${p[0]}タイプの技${slot ? `(${slot}番スロット)` : ""}`)]); }
+  if ($("sMoveSpecial").checked) groups.push([T("@わざ", "@special", "特別なわざ・レガシー技")]);
+  if ($("sWeatherSlot").value !== "off") { const slot = $("sWeatherSlot").value; groups.push([T("@" + slot + "天候", "@" + slot + "weather", `天候ブースト技${slot ? `(${slot}番スロット)` : ""}`)]); }
+  if ($("sWeak").value !== "") { const p = TYPES[Number($("sWeak").value)]; groups.push([T("<" + p[0], "<" + p[1], `${p[0]}が弱点`)]); }
+  if ($("sStrong").value !== "") { const p = TYPES[Number($("sStrong").value)]; groups.push([T(">" + p[0], ">" + p[1], `${p[0]}に強い技`)]); }
+  const tagS = sanitizeFree($("sTag").value, "#");
+  if (tagS.text) groups.push([T("#" + tagS.text, "#" + tagS.text, `タグ「${tagS.text}」`)]);
+  if ($("sTagAll").checked) groups.push([T("#", "#", "タグ付きすべて")]);
+  for (const t of simpleNot) groups.push([{ ...t, not: true }]);
+  return { groups, warnings };
+}
+function renderNotList() {
+  $("notList").innerHTML = simpleNot.map((t, i) =>
+    `<span class="tchip"><span class="not">!</span>${esc(t.label)}<button type="button" data-not-del="${i}" aria-label="除外条件を削除">×</button></span>`).join("");
+  $("notList").querySelectorAll("[data-not-del]").forEach(b => b.addEventListener("click", () => { simpleNot.splice(Number(b.dataset.notDel), 1); renderNotList(); render(); }));
+}
+$("notAdd").addEventListener("click", () => {
+  const v = $("notSelect").value; if (!v) return;
+  const [kind, key] = v.split(":");
+  const t = kind === "kw" ? kwTerm(key, true) : T(key, key, `評価 ${key}`, true);
+  if (t && !simpleNot.some(x => x.label === t.label)) { simpleNot.push(t); renderNotList(); render(); }
+});
+function clearSimple() {
+  document.querySelectorAll("#simpleMode input[type='checkbox']").forEach(c => c.checked = false);
+  document.querySelectorAll("#simpleMode input[type='text'], #simpleMode input[type='number']").forEach(i => i.value = "");
+  document.querySelectorAll("#simpleMode select").forEach(s => s.selectedIndex = 0);
+  $("sWeatherSlot").value = "off";
+  simpleNot = []; renderNotList();
+}
+$("clearSimple").addEventListener("click", () => { clearSimple(); render(); toast("条件をクリアしました"); });
+$("resetBtn").addEventListener("click", () => { clearSimple(); render(); toast("条件をクリアしました"); });
+document.querySelectorAll("[data-preset]").forEach(btn => btn.addEventListener("click", () => {
+  clearSimple();
+  const p = btn.dataset.preset;
+  if (p === "hundo") document.querySelector('input[name="star"][value="4*"]').checked = true;
+  if (p === "zero") { $("ivAtk").value = "0"; $("ivDef").value = "0"; $("ivHp").value = "0"; }
+  if (p === "today") { $("r_age_min").value = "0"; $("r_age_max").value = "0"; }
+  if (p === "shinyLegend") { $("kw_shiny").checked = true; $("kw_legendary").checked = true; }
+  if (p === "canEvolve") $("kw_evolve").checked = true;
+  if (p === "cleanup") { simpleNot = [kwTerm("shiny", true), kwTerm("legendary", true), kwTerm("favorite", true), T("4*", "4*", "評価 4*", true)]; renderNotList(); }
+  render(); toast("プリセットをセットしました");
+}));
+
+/* ================= output ================= */
+let currentStr = "";
+function render() {
+  const s = buildSimpleGroups();
+  const result = buildOutput(s.groups, lang);
+  const warnings = [...s.warnings, ...result.warnings];
+  currentStr = result.str;
+  const out = $("outStr");
+  if (currentStr) { out.textContent = currentStr; out.classList.remove("empty"); }
+  else { out.textContent = "条件を選ぶと、ここに検索ワードが出ます"; out.classList.add("empty"); }
+  $("outSummary").textContent = currentStr ? `意味: ${result.summary}` : "";
+  $("outCount").textContent = `${currentStr.length} 文字`;
+  const w = $("outWarn");
+  if (warnings.length) { w.textContent = "⚠ " + warnings.join(" "); w.classList.add("show"); } else w.classList.remove("show");
+}
+document.addEventListener("input", render);
+document.addEventListener("change", render);
+
+let toastTimer;
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200); }
+$("copyBtn").addEventListener("click", async () => {
+  if (!currentStr) { toast("まず条件を選んでください"); return; }
+  try { await navigator.clipboard.writeText(currentStr); toast("コピーしました。ポケGOの検索欄に貼り付けてください"); }
+  catch {
+    const ta = document.createElement("textarea"); ta.value = currentStr; document.body.appendChild(ta);
+    ta.select(); try { document.execCommand("copy"); toast("コピーしました"); } catch { toast("コピーに失敗しました。文字列を長押しでコピーしてください"); }
+    ta.remove();
+  }
+});
+$("shareBtn").addEventListener("click", async () => {
+  if (!currentStr) { toast("まず条件を選んでください"); return; }
+  if (navigator.share) { try { await navigator.share({ text: currentStr }); } catch {} }
+  else { try { await navigator.clipboard.writeText(currentStr); toast("コピーしました（共有非対応のため）"); } catch { toast("共有できませんでした"); } }
+});
+refreshLangAvailability();
+render();
+
+/* test hooks */
+window.SearchGen = { buildOutput, rangeExpr, rangeTerm, buildSimpleGroups, T, kwTerm, KEYWORDS, TYPES, TYPE_COLORS, typeTextColor, RANGE_KEYS, getStr: () => currentStr };
+</script>
+</body>
+</html>
