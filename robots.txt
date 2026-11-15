@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kobe-san3.github.io/pokego-search/sitemap.xml
