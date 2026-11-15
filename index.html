@@ -104,7 +104,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;line-height:1.7;padding
   <header class="series-header">
     <div class="series-name">非公式！ポケモンツールシリーズ</div>
     <h1>非公式！ポケGO検索ワード生成</h1>
-    <div class="catch"><strong>条件を選ぶだけで検索ワードを自動生成</strong><span class="ver">Ver.1.2.1</span></div>
+    <div class="catch"><strong>条件を選ぶだけで検索ワードを自動生成</strong><span class="ver">Ver.1.3.0</span></div>
     <div class="lang-row">
       <span class="lang-label">出力:</span>
       <span class="seg" role="group" aria-label="出力ワードの言語">
@@ -125,7 +125,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;line-height:1.7;padding
         <button class="preset" data-preset="today"><b>今日ゲット</b>過去24時間以内</button>
         <button class="preset" data-preset="shinyLegend"><b>色違い×伝説</b>両方に当てはまる</button>
         <button class="preset" data-preset="canEvolve"><b>進化できる</b>今すぐ進化可能</button>
-        <button class="preset" data-preset="cleanup"><b>整理候補</b>色違い・伝説・100%・お気に入りを除外</button>
+        <button class="preset" data-preset="cleanup"><b>整理候補（博士送り）</b>色違い・伝説・幻・シャドウ・UB・キラ・衣装・お気に入り・ダイマックス系・100%を除外</button>
       </div>
       <p class="small" style="margin:8px 0 0">※「整理候補」は博士送りの判断材料の表示だけです。送る前に必ずゲーム内で1匹ずつ目視確認してください。</p>
     </section>
@@ -210,6 +210,8 @@ footer{text-align:center;color:var(--sub);font-size:12px;line-height:1.7;padding
       <label class="f" for="notSelect">除外したい条件（NOT）を追加</label>
       <div style="display:flex;gap:8px"><select id="notSelect" style="flex:1"></select><button class="ghost" id="notAdd" type="button">追加</button></div>
       <div class="term-chips" id="notList" style="margin-top:9px"></div>
+      <div style="margin-top:10px"><button class="ghost" id="regionalNotAdd" type="button">地域限定ポケモンをまとめて除外に追加（29種）</button></div>
+      <p class="small">※地域限定には専用の検索キーワードがないため、29種の名前で除外します（文字列は長くなります）。姿違い・進化系は名前検索の仕様上カバーしきれない場合があるので、送る前の目視確認はこれまで通りお願いします。</p>
       <div style="margin-top:14px"><button class="ghost" id="clearSimple" type="button">条件をすべてクリア</button></div>
     </section>
   </main>
@@ -219,13 +221,13 @@ footer{text-align:center;color:var(--sub);font-size:12px;line-height:1.7;padding
     <ul>
       <li>生成された文字列をコピーして、Pokémon GOのポケモンボックス検索欄に貼り付けるだけです。</li>
       <li><code>&</code> = AND（かつ）、<code>,</code> = OR（どれか）、<code>!</code> = NOT（〜でない）。ゲーム側では OR が AND より先に評価され、括弧は使えません。本ツールの組み立て方はこの仕様に合わせています。</li>
-      <li>出力言語はタイトル下のボタンで日本語/英語を切替できます。ゲームの言語設定に合わせて選んでください。日本語で確認できていないワード（ダイマックス等）は日本語モードでは生成しません。</li>
+      <li>出力言語はタイトル下のボタンで日本語/英語を切替できます。ゲームの言語設定に合わせて選んでください。日本語で確認できていないワード（ハイパートレーニング中等）は日本語モードでは生成しません。</li>
       <li><code>+名前</code>（進化ファミリー）は文字列の先頭かカンマの直後でだけ有効とされるため、必要なら自動で先頭に並べ替えます。</li>
     </ul>
   </details>
 
   <footer>
-    非公式！ポケGO検索ワード生成 v1.2.1<br>
+    非公式！ポケGO検索ワード生成 v1.3.0<br>
     本ツールは非公式のファンツールです。Pokémon GO / Niantic / 任天堂 / 株式会社ポケモンとは関係ありません。<br>
     構文の根拠: Niantic公式ヘルプ、Pokémon GO Hub Database、ポケモンGO攻略図鑑、ポケモンWiki（2026-10-26調査）
   </footer>
@@ -253,7 +255,7 @@ footer{text-align:center;color:var(--sub);font-size:12px;line-height:1.7;padding
 
 <script>
 "use strict";
-const APP_VERSION = "1.2.1";
+const APP_VERSION = "1.3.0";
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
@@ -280,6 +282,19 @@ const REGIONS = [
   ["イッシュ","unova"],["カロス","kalos"],["アローラ","alola"],["ガラル","galar"],
   ["ヒスイ","hisui"],["パルデア","paldea"]
 ];
+/* 地域限定ポケモン（2026-11時点の主要種）。専用検索キーワードが存在しないため名前で除外する。
+   姿違い（フラベベ等の色違いフォルム等）は種単位でまとめて除外する安全側の設計。 */
+const REGIONALS = [
+  ["カモネギ","farfetchd"],["ガルーラ","kangaskhan"],["バリヤード","mr. mime"],["ケンタロス","tauros"],
+  ["ヘラクロス","heracross"],["サニーゴ","corsola"],["トロピウス","tropius"],["コータス","torkoal"],
+  ["ジーランス","relicanth"],["パチリス","pachirisu"],["ペラップ","chatot"],["マスキッパ","carnivine"],
+  ["ユクシー","uxie"],["エムリット","mesprit"],["アグノム","azelf"],
+  ["ヤナップ","pansage"],["バオップ","pansear"],["ヒヤップ","panpour"],
+  ["マラカッチ","maractus"],["シンボラー","sigilyph"],["バッフロン","bouffalant"],
+  ["フラベベ","flabebe"],["フラエッテ","floette"],["フラージェス","florges"],
+  ["クレッフィ","klefki"],["ルチャブル","hawlucha"],["オドリドリ","oricorio"],
+  ["キュワワー","comfey"],["イキリンコ","squawkabilly"]
+];
 const GENDERS = [["おす","male"],["めす","female"],["性別不明","genderunknown"]];
 const SIZES = [["XXS","xxs"],["XS","xs"],["XL","xl"],["XXL","xxl"]];
 const STARS = ["0*","1*","2*","3*","4*"];
@@ -302,8 +317,8 @@ const KEYWORDS = [
   {k:"specialbackground",cat:"special",label:"スペシャル背景",ja:"すぺしゃるはいけい",en:"specialbackground"},
   {k:"locationbackground",cat:"special",label:"ロケーション背景",ja:null,en:"locationbackground"},
   {k:"candyxl",cat:"special",label:"アメXL強化済み",ja:"アメXL",en:"candyxl"},
-  {k:"dynamax",cat:"special",label:"ダイマックス",ja:null,en:"dynamax"},
-  {k:"gigantamax",cat:"special",label:"キョダイマックス",ja:null,en:"gigantamax"},
+  {k:"dynamax",cat:"special",label:"ダイマックス",ja:"だいまっくす",en:"dynamax"},
+  {k:"gigantamax",cat:"special",label:"キョダイマックス",ja:"きょだいまっくす",en:"gigantamax"},
   {k:"hypertraining",cat:"special",label:"ハイパートレーニング中",ja:null,en:"hypertraining"},
   {k:"fusion",cat:"special",label:"合体できる/合体済み",ja:"がったい",en:"fusion"},
   // cat: evolve
@@ -507,6 +522,15 @@ function renderNotList() {
     `<span class="tchip"><span class="not">!</span>${esc(t.label)}<button type="button" data-not-del="${i}" aria-label="除外条件を削除">×</button></span>`).join("");
   $("notList").querySelectorAll("[data-not-del]").forEach(b => b.addEventListener("click", () => { simpleNot.splice(Number(b.dataset.notDel), 1); renderNotList(); render(); }));
 }
+$("regionalNotAdd").addEventListener("click", () => {
+  let added = 0;
+  for (const [ja, en] of REGIONALS) {
+    const label = ja + "（地域限定）";
+    if (!simpleNot.some(x => x.label === label)) { simpleNot.push(T(ja, en, label, true)); added++; }
+  }
+  renderNotList(); render();
+  toast(added ? "地域限定" + added + "種を除外に追加しました" : "地域限定は追加済みです");
+});
 $("notAdd").addEventListener("click", () => {
   const v = $("notSelect").value; if (!v) return;
   const [kind, key] = v.split(":");
@@ -530,7 +554,7 @@ document.querySelectorAll("[data-preset]").forEach(btn => btn.addEventListener("
   if (p === "today") { $("r_age_min").value = "0"; $("r_age_max").value = "0"; }
   if (p === "shinyLegend") { $("kw_shiny").checked = true; $("kw_legendary").checked = true; }
   if (p === "canEvolve") $("kw_evolve").checked = true;
-  if (p === "cleanup") { simpleNot = [kwTerm("shiny", true), kwTerm("legendary", true), kwTerm("favorite", true), T("4*", "4*", "評価 4*", true)]; renderNotList(); }
+  if (p === "cleanup") { simpleNot = [kwTerm("shiny", true), kwTerm("legendary", true), kwTerm("mythical", true), kwTerm("shadow", true), kwTerm("ultrabeast", true), kwTerm("lucky", true), kwTerm("costume", true), kwTerm("favorite", true), kwTerm("dynamax", true), kwTerm("gigantamax", true), T("4*", "4*", "評価 4*", true)]; renderNotList(); }
   render(); toast("プリセットをセットしました");
 }));
 
@@ -572,7 +596,7 @@ refreshLangAvailability();
 render();
 
 /* test hooks */
-window.SearchGen = { buildOutput, rangeExpr, rangeTerm, buildSimpleGroups, T, kwTerm, KEYWORDS, TYPES, TYPE_COLORS, typeTextColor, RANGE_KEYS, getStr: () => currentStr };
+window.SearchGen = { buildOutput, rangeExpr, rangeTerm, buildSimpleGroups, T, kwTerm, KEYWORDS, REGIONALS, TYPES, TYPE_COLORS, typeTextColor, RANGE_KEYS, getStr: () => currentStr };
 </script>
 </body>
 </html>

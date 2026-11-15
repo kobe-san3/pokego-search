@@ -1,5 +1,5 @@
 "use strict";
-const CACHE = "pokego-search-1.2.1";
+const CACHE = "pokego-search-1.3.0";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest",
   "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./icon-180.png"];
 
